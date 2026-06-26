@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>9号电竞俱乐部 · 护航陪练</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    :root {
+      --cyan: #00d4ff;
+      --cyan-bright: #3de0ff;
+      --gold: #ffd700;
+      --red: #ff4444;
+      --green: #00e676;
+      --bg-dark: #03070e;
+      --bg-card: rgba(8, 14, 26, 0.85);
+      --border-glow: rgba(0, 212, 255, 0.5);
+      --font-main: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', system-ui, sans-serif;
+      --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+    }
+    body {
+      font-family: var(--font-main);
+      background: var(--bg-dark);
+      color: #eef3ff;
+      min-height: 100vh;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      background-position: center;
+      overflow-x: hidden;
+      position: relative;
+    }
+    /* 科技感扫描线叠加 */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, rgba(0, 212, 255, 0.015) 0px, rgba(0, 212, 255, 0.015) 2px, transparent 2px, transparent 4px);
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.3;
+    }
+    /* 导航栏 */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: 56px;
+      background: rgba(3, 7, 14, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      object-fit: contain;
+      border: 1px solid rgba(0,212,255,0.4);
+      background: rgba(0,212,255,0.08);
+    }
+    .brand-name {
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #fff, #b0eaff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .brand-name span {
+      color: var(--cyan);
+      -webkit-text-fill-color: var(--cyan);
+    }
+    .menu-btn {
+      width: 38px;
+      height: 38px;
+      background: rgba(0,212,255,0.05);
+      border: 1px solid rgba(0,212,255,0.35);
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: 0.3s;
+    }
+    .menu-btn:hover {
+      background: rgba(0,212,255,0.12);
+      box-shadow: 0 0 18px rgba(0,212,255,0.4);
+    }
+    .menu-btn .bar {
+      width: 19px;
+      height: 2px;
+      background: var(--cyan);
+      border-radius: 2px;
+      transition: all 0.3s;
+    }
+    .menu-btn.active .bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .menu-btn.active .bar:nth-child(2) { opacity: 0; }
+    .menu-btn.active .bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    /* 遮罩 */
+    .overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.35s;
+    }
+    .overlay.active { opacity: 1; pointer-events: auto; }
+    /* 抽屉 */
+    .drawer {
+      position: fixed; top: 0; right: 0; z-index: 300;
+      width: 380px; max-width: 85vw; height: 100vh; height: 100dvh;
+      background: rgba(8, 14, 24, 0.95);
+      backdrop-filter: blur(20px);
+      border-left: 1px solid rgba(0,212,255,0.25);
+      transform: translateX(105%);
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+      display: flex; flex-direction: column;
+      box-shadow: -10px 0 30px rgba(0,0,0,0.7);
+    }
+    .drawer.active { transform: translateX(0); }
+    .drawer-header {
+      padding: 18px; border-bottom: 1px solid rgba(0,212,255,0.2);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .drawer-header h3 { color: var(--cyan); font-weight: 700; letter-spacing: 2px; }
+    .drawer-close {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);
+      color: #fff; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center;
+    }
+    .drawer-body { flex:1; overflow-y: auto; padding: 10px 8px 20px; }
+    .accordion-item {
+      margin-bottom: 6px; border-radius: 10px; overflow: hidden;
+      border: 1px solid rgba(0,212,255,0.1);
+      background: rgba(255,255,255,0.02);
+    }
+    .accordion-header {
+      padding: 14px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+      font-weight: 600; color: #d0dae8; transition: 0.2s;
+    }
+    .accordion-header:hover { background: rgba(0,212,255,0.05); color: #fff; }
+    .accordion-header .dot { width: 6px; height: 6px; background: var(--cyan); border-radius: 50%; box-shadow: 0 0 8px var(--cyan); }
+    .accordion-header .arrow { margin-left: auto; transition: 0.3s; font-size: 0.7rem; color: var(--cyan); }
+    .accordion-item.open .accordion-header .arrow { transform: rotate(180deg); }
+    .accordion-body {
+      max-height: 0; overflow: hidden; padding: 0 16px;
+      transition: max-height 0.4s ease, padding 0.3s;
+      font-size: 0.82rem; color: #b0bedd; line-height: 1.7;
+    }
+    .accordion-item.open .accordion-body { max-height: 600px; padding: 8px 16px 16px; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px; }
+    .badge-hot { background: rgba(255,68,68,0.2); color: #ff6b6b; border: 1px solid rgba(255,68,68,0.4); }
+    .badge-new { background: rgba(0,212,255,0.15); color: var(--cyan); border: 1px solid rgba(0,212,255,0.3); }
+    .badge-gold { background: rgba(255,215,0,0.15); color: var(--gold); border: 1px solid rgba(255,215,0,0.3); }
+    .price-text { color: var(--gold); font-weight: 700; font-family: var(--font-mono); }
+    .red-text { color: var(--red); font-weight: 600; }
+    .green-text { color: var(--green); font-weight: 600; }
+
+    /* 主内容 */
+    .main {
+      position: relative; z-index: 1; padding-top: 70px;
+      max-width: 580px; margin: 0 auto; padding-left: 16px; padding-right: 16px;
+      padding-bottom: 30px;
+    }
+    /* 英雄区 */
+    .hero {
+      text-align: center; padding: 20px 0 16px;
+    }
+    .hero-logo {
+      width: 80px; height: 80px; border-radius: 18px; object-fit: contain;
+      background: rgba(0,212,255,0.06); border: 2px solid rgba(0,212,255,0.5);
+      box-shadow: 0 0 35px rgba(0,212,255,0.3);
+      margin-bottom: 12px;
+      animation: logoGlow 3s infinite alternate;
+    }
+    @keyframes logoGlow { to { box-shadow: 0 0 55px rgba(0,212,255,0.6); } }
+    .hero h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: 2px; }
+    .hero h1 .cyan { color: var(--cyan); text-shadow: 0 0 20px rgba(0,212,255,0.5); }
+    .hero .subtitle {
+      display: inline-block; margin-top: 8px; padding: 6px 18px;
+      border: 1px solid rgba(0,212,255,0.35); border-radius: 20px;
+      background: rgba(0,212,255,0.06); font-size: 0.8rem; letter-spacing: 2px;
+      color: #c0d8f0;
+    }
+    /* 套餐卡片 */
+    .section-title {
+      text-align: center; font-size: 0.75rem; letter-spacing: 4px; color: var(--cyan);
+      margin: 16px 0 10px; text-transform: uppercase; font-weight: 600;
+    }
+    .pack-row {
+      display: flex; gap: 12px; margin-bottom: 12px;
+    }
+    .pack-card {
+      flex:1; position: relative;
+      background: var(--bg-card); backdrop-filter: blur(10px);
+      border: 1px solid rgba(0,212,255,0.2); border-radius: 16px;
+      padding: 16px 12px; text-align: center;
+      transition: all 0.3s; cursor: default;
+    }
+    .pack-card:hover {
+      border-color: rgba(0,212,255,0.6);
+      box-shadow: 0 0 25px rgba(0,212,255,0.2);
+      transform: translateY(-2px);
+    }
+    .pack-card .hot-tag {
+      position: absolute; top: -6px; right: 12px;
+      background: var(--red); color: #fff; font-size: 0.65rem; font-weight: 700;
+      padding: 3px 12px; border-radius: 0 0 6px 6px;
+      box-shadow: 0 0 18px rgba(255,68,68,0.5);
+      letter-spacing: 1px;
+    }
+    .pack-card h4 { font-size: 0.9rem; color: #fff; margin-bottom: 4px; }
+    .pack-card .price { font-size: 1.6rem; font-weight: 800; color: var(--gold); font-family: var(--font-mono); margin: 6px 0; }
+    .pack-card .desc { font-size: 0.7rem; color: #8899bb; }
+
+    /* 双卡片：下单 + 招募 */
+    .dual-section {
+      display: flex; gap: 12px; margin: 16px 0;
+    }
+    .dual-card {
+      flex:1; border-radius: 16px; padding: 16px 14px;
+      backdrop-filter: blur(10px); transition: 0.3s;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+    }
+    .order-card {
+      background: rgba(0, 30, 50, 0.7);
+      border: 1.5px solid rgba(0,212,255,0.5);
+      box-shadow: 0 0 20px rgba(0,212,255,0.15);
+    }
+    .recruit-card {
+      background: rgba(0, 40, 20, 0.7);
+      border: 1.5px solid rgba(0,230,118,0.5);
+      box-shadow: 0 0 20px rgba(0,230,118,0.15);
+    }
+    .dual-card:hover { transform: translateY(-3px); box-shadow: 0 0 30px rgba(0,212,255,0.25); }
+    .recruit-card:hover { box-shadow: 0 0 30px rgba(0,230,118,0.25); }
+    .card-icon { font-size: 2rem; margin-bottom: 6px; }
+    .dual-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 8px; letter-spacing: 1px; }
+    .order-card h3 { color: #fff; }
+    .recruit-card h3 { color: #fff; }
+    .qr-img {
+      width: 110px; height: 110px; border-radius: 10px; object-fit: contain;
+      background: #fff; padding: 4px; border: 2px solid rgba(0,212,255,0.5);
+      margin-bottom: 8px;
+    }
+    .recruit-card .qr-img { border-color: rgba(0,230,118,0.5); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 18px; border-radius: 25px; font-weight: 700; font-size: 0.8rem;
+      letter-spacing: 1px; border: none; cursor: pointer; text-decoration: none;
+      transition: 0.3s; white-space: nowrap; margin: 4px;
+    }
+    .btn-cyan {
+      background: var(--cyan); color: #000; box-shadow: 0 0 15px rgba(0,212,255,0.5);
+    }
+    .btn-cyan:hover { background: #3de0ff; box-shadow: 0 0 25px rgba(0,212,255,0.8); }
+    .btn-outline-cyan {
+      background: transparent; color: var(--cyan); border: 1.5px solid var(--cyan);
+      box-shadow: 0 0 10px rgba(0,212,255,0.1);
+    }
+    .btn-outline-cyan:hover { background: rgba(0,212,255,0.1); }
+    .btn-green {
+      background: var(--green); color: #000; box-shadow: 0 0 15px rgba(0,230,118,0.5);
+    }
+    .btn-green:hover { background: #00f57c; box-shadow: 0 0 25px rgba(0,230,118,0.8); }
+    .btn-outline-green {
+      background: transparent; color: var(--green); border: 1.5px solid var(--green);
+    }
+    .btn-outline-green:hover { background: rgba(0,230,118,0.1); }
+    .steps-row {
+      display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+      margin-top: 10px; font-size: 0.68rem; color: #a0b8d0;
+    }
+    .step { background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
+    .step span { color: var(--cyan); font-weight: 700; margin-right: 4px; }
+
+    /* 承诺区 */
+    .promise {
+      margin-top: 16px; background: rgba(20, 5, 5, 0.7);
+      border: 1.5px solid rgba(255,68,68,0.6); border-radius: 16px;
+      padding: 16px; box-shadow: 0 0 25px rgba(255,68,68,0.15);
+      position: relative;
+    }
+    .promise h3 { text-align: center; color: #ff5e5e; letter-spacing: 2px; margin-bottom: 12px; }
+    .promise-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .promise-item { font-size: 0.75rem; color: #fcc; display: flex; align-items: center; gap: 6px; }
+    .promise-highlight { text-align: center; margin-top: 12px; font-weight: 700; color: #ff7a7a; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;}50%{opacity:0.7;} }
+
+    /* 底部 */
+    .footer {
+      text-align: center; padding: 20px 10px; font-size: 0.7rem; color: #667a94;
+      border-top: 1px solid rgba(255,255,255,0.05); margin-top: 24px;
+    }
+    .footer .warning { color: #c97a7a; }
+
+    @media (max-width: 500px) {
+      .dual-section, .pack-row { flex-direction: column; }
+      .promise-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 1.5rem; }
+      .qr-img { width: 90px; height: 90px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 导航 -->
+  <nav class="navbar">
+    <div class="brand">
+      <img src="logo.png" alt="logo" class="nav-logo" onerror="this.style.background='rgba(0,212,255,0.2)';this.alt='🎮';">
+      <div class="brand-name">9号<span>电竞俱乐部</span></div>
+    </div>
+    <div class="menu-btn" id="menuBtn">
+      <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </div>
+  </nav>
+
+  <!-- 遮罩+抽屉 -->
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="drawer">
+    <div class="drawer-header">
+      <h3>⚡ 菜单导航</h3>
+      <button class="drawer-close" id="drawerClose">✕</button>
+    </div>
+    <div class="drawer-body" id="drawerBody">
+      <!-- 关于我们 -->
+      <div class="accordion-item">
+        <div class="accordion-header"><span class="dot"></span>关于我们<span class="arrow">▼</span></div>
+        <div class="accordion-body">
+          <p>9号电竞俱乐部 — 专注高端游戏护航陪练。</p>
+          <p style="margin-top:6px;">主营项目：<br>🔹 三角洲行动（机密大坝、长弓溪谷）<br>🔹 和平精英（全段位稳图护航）</p>
+        </div>
+      </div>
+      <!-- 完整服务套餐 -->
+      <div class="accordion-item">
+        <div class="accordion-header"><span class="dot"></span>完整服务套餐<span class="arrow">▼</span></div>
+        <div class="accordion-body">
+          <p><span class="badge badge-hot">热销</span> 新人体验单 <span class="price-text">6.9元</span></p>
+          <p><span class="badge badge-hot">热销</span> 小时畅玩单 <span class="price-text">16.8元</span></p>
+          <p><span class="badge badge-gold">推荐</span> 机密大坝保底 <span class="price-text">详询客服</span></p>
+          <p><span class="badge badge-new">大额</span> 588万哈夫币套餐 <span class="price-text">详询客服</span></p>
+        </div>
+      </div>
+      <!-- 下单流程 -->
+      <div class="accordion-item">
+        <div class="accordion-header"><span class="dot"></span>完整下单流程<span class="arrow">▼</span></div>
+        <div class="accordion-body">
+          <p>1️⃣ 保存二维码 → 2️⃣ QQ扫码加客服 → 3️⃣ 选服务付款 → 4️⃣ <span class="red-text">5分钟内</span>打手接单 → 5️⃣ 对接开黑 → 6️⃣ 售后收尾</p>
+        </div>
+      </div>
+      <!-- 六大保障 -->
+      <div class="accordion-item">
+        <div class="accordion-header"><span class="dot"></span>六大保障<span class="arrow">▼</span></div>
+        <div class="accordion-body">
+          <p>✅ 纯手动操作   🕐 24小时在线<br>⚡ <span class="red-text">5分钟必接单</span><br>💰 翻车全额退   🔒 隐私安全<br>🛡️ 售后无忧</p>
+        </div>
+      </div>
+      <!-- 打手招募考核 -->
+      <div class="accordion-item">
+        <div class="accordion-header"><span class="dot"></span>打手招募考核<span class="arrow">▼</span></div>
+        <div class="accordion-body">
+          <p><span class="green-text">娱乐打手</span>：高抽成·低门槛，适合爱好者</p>
+          <p><span style="color:#00d4ff;">技术打手</span>：低抽成·高收入，需严格考核</p>
+          <p style="margin-top:6px;font-size:0.75rem;">📌 联系客服备注“考核”，安排考核流程</p>
+        </div>
+      </div>
+      <!-- 投诉售后 -->
+      <div class="accordion-item">
+        <div class="accordion-header"><span class="dot"></span>投诉与售后<span class="arrow">▼</span></div>
+        <div class="accordion-body">
+          <p>跑路/消极/开挂 → <span class="red-text">全额退款</span><br>涉事打手永久踢出俱乐部。</p>
+        </div>
+      </div>
+      <!-- 常见问题 -->
+      <div class="accordion-item">
+        <div class="accordion-header"><span class="dot"></span>常见问题<span class="arrow">▼</span></div>
+        <div class="accordion-body">
+          <p><strong>封号风险？</strong>纯手动极低，我方问题全额赔偿。</p>
+          <p><strong>接单时长？</strong><span class="red-text">5分钟内必接</span>。</p>
+          <p><strong>支付方式？</strong>微信/支付宝/QQ红包。</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主内容 -->
+  <main class="main">
+    <!-- 英雄区 -->
+    <section class="hero">
+      <img src="logo.png" alt="Logo" class="hero-logo" onerror="this.style.background='rgba(0,212,255,0.15)';this.alt='🎮';">
+      <h1>9号<span class="cyan">电竞俱乐部</span></h1>
+      <div class="subtitle">一保一单人护卫 · 全地图稳图护航</div>
+    </section>
+
+    <!-- 热门套餐 -->
+    <div class="section-title">🔥 热门套餐</div>
+    <div class="pack-row">
+      <div class="pack-card">
+        <span class="hot-tag">热销</span>
+        <h4>新人体验单</h4>
+        <div class="price">¥6.9</div>
+        <div class="desc">首次特惠 · 一保一护卫</div>
+      </div>
+      <div class="pack-card">
+        <span class="hot-tag">热销</span>
+        <h4>小时畅玩单</h4>
+        <div class="price">¥16.8</div>
+        <div class="desc">按小时计费 · 随叫随到</div>
+      </div>
+    </div>
+
+    <!-- 下单 + 招募 双卡片 -->
+    <div class="dual-section">
+      <!-- 下单卡片 -->
+      <div class="dual-card order-card">
+        <div class="card-icon">📱</div>
+        <h3>扫码下单</h3>
+        <img src="qr.png" alt="下单二维码" class="qr-img" id="orderQr" onerror="this.style.background='#eee';this.alt='二维码';">
+        <p style="font-size:0.7rem; color:#b0d8ff; margin:4px 0;">保存二维码 → QQ扫码加客服</p>
+        <a href="https://qm.qq.com/q/P4J5FEWVUY" target="_blank" class="btn btn-cyan" style="margin-top:6px;">💬 一键加QQ客服</a>
+        <button class="btn btn-outline-cyan" id="saveOrderQr" style="margin-top:4px;">💾 保存二维码</button>
+        <div class="steps-row">
+          <span class="step"><span>1</span>保存码</span>
+          <span class="step"><span>2</span>加客服</span>
+          <span class="step"><span>3</span>选服务</span>
+          <span class="step"><span>4</span>5分接单</span>
+        </div>
+      </div>
+      <!-- 打手招募卡片 -->
+      <div class="dual-card recruit-card">
+        <div class="card-icon">🎖️</div>
+        <h3>打手招募</h3>
+        <img src="exam_qr.png" alt="考核二维码" class="qr-img" id="examQr" onerror="this.style.background='#eee';this.alt='考核码';">
+        <p style="font-size:0.7rem; color:#b0ffd0; margin:4px 0;">扫码加客服 · 备注“考核”</p>
+        <a href="https://qm.qq.com/q/P4J5FEWVUY" target="_blank" class="btn btn-green" style="margin-top:6px;">💬 联系客服安排考核</a>
+        <div style="margin-top:8px; font-size:0.68rem; color:#99ccaa; display:flex; gap:8px; justify-content:center;">
+          <span>🎮娱乐打手</span>
+          <span>🏆技术打手</span>
+        </div>
+        <p style="font-size:0.65rem; color:#7baa90; margin-top:4px;">高抽成/高收入 · 考核上岗</p>
+      </div>
+    </div>
+
+    <!-- 郑重承诺 -->
+    <div class="promise">
+      <h3>🛡️ 郑重承诺 · 四大保障</h3>
+      <div class="promise-grid">
+        <div class="promise-item"><span style="color:var(--red);">▸</span> 翻车/跑路/消极 – 全额退款</div>
+        <div class="promise-item"><span style="color:var(--red);">▸</span> 开挂违规 – 全额退款+赔偿</div>
+        <div class="promise-item"><span style="color:var(--red);">▸</span> 涉事打手永久踢出</div>
+        <div class="promise-item"><span style="color:var(--red);">▸</span> 超时未接单补偿优惠券</div>
+      </div>
+      <div class="promise-highlight">⚡ 5分钟必接单 · 超时即赔 ⚡</div>
+    </div>
+
+    <!-- 底部 -->
+    <footer class="footer">
+      <p>© 2025 9号电竞俱乐部 · 版权所有</p>
+      <p class="warning">⚠ 仅供游戏娱乐交流，严禁违规用途</p>
+    </footer>
+  </main>
+
+  <script>
+    (function() {
+      const menuBtn = document.getElementById('menuBtn');
+      const drawer = document.getElementById('drawer');
+      const overlay = document.getElementById('overlay');
+      const drawerClose = document.getElementById('drawerClose');
+      const drawerBody = document.getElementById('drawerBody');
+
+      function openDrawer() {
+        drawer.classList.add('active');
+        overlay.classList.add('active');
+        menuBtn.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeDrawer() {
+        drawer.classList.remove('active');
+        overlay.classList.remove('active');
+        menuBtn.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+      menuBtn.addEventListener('click', () => drawer.classList.contains('active') ? closeDrawer() : openDrawer());
+      overlay.addEventListener('click', closeDrawer);
+      drawerClose.addEventListener('click', closeDrawer);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+      // 手风琴
+      drawerBody.addEventListener('click', (e) => {
+        const header = e.target.closest('.accordion-header');
+        if (!header) return;
+        const item = header.parentElement;
+        const wasOpen = item.classList.contains('open');
+        drawerBody.querySelectorAll('.accordion-item').forEach(it => it.classList.remove('open'));
+        if (!wasOpen) {
+          item.classList.add('open');
+          item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+
+      // 保存二维码 (下单)
+      document.getElementById('saveOrderQr').addEventListener('click', () => {
+        const img = document.getElementById('orderQr');
+        saveImage(img, '9号下单二维码.png');
+      });
+
+      function saveImage(img, filename) {
+        if (!img.complete || img.naturalWidth === 0) {
+          const a = document.createElement('a');
+          a.href = img.src; a.download = filename; a.target = '_blank'; a.click();
+          return;
+        }
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename; a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+          }, 'image/png');
+        } catch (e) {
+          const a = document.createElement('a');
+          a.href = img.src; a.download = filename; a.target = '_blank'; a.click();
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
